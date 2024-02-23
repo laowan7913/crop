@@ -55,9 +55,10 @@ av_code_common = {"soe", "snis", "ssni", "ssis","sone", "midv", "mide", "mifd", 
                     "roe", "cawd", "kawd", "same", "adn", "atid", "rbk", "meyd", "mdyd",
                     "pgd", "pred"}
 # Prestige
-av_code_prestige = {"abf", "abw", "abs", "abp", "chn", "yrh", "tre", "fir", "tus", "ppt"}
+av_code_prestige = {"abf", "abw", "abs", "abp", "chn", "yrh", "tre", "fir", "tus", "ppt", "sga"}
 # S1 & Faleno
-av_code_sod = {"stars", "star", "sdnm", "sply", "sdab", "mogi"}
+av_code_sod = {"start", "stars", "star", "sdnm", "sdmm", "sply", "sdjs", "sdde", "sdab", "mogi", 
+               "sw", "suwk"}
 av_code_faleno = {"fsdss"}
 # other
 av_code_3 = {"clot"}
@@ -266,6 +267,7 @@ async def check_av_code_vdo(avcode):
         except aiohttp.ClientError as e:
             print(f"Error checking URL {url}: {e}")
             return False
+        
     async with aiohttp.ClientSession() as session:
         for code in avcode:
             suffixes = ["_hhb_w.mp4","_mhb_w.mp4", "_dmb_w.mp4"]
@@ -277,9 +279,7 @@ async def check_av_code_vdo(avcode):
                     break
             if not existing:
                 av_code = Av.get_code_pin(code) + "-" + Av.get_code_num(code)
-                unexisting_avcode.append(av_code)
-            else:
-                break  # 如果找到存在的链接，立即停止对下一个code的检查
+                unexisting_avcode.append(av_code)            
     return existing_code_url, existing_avcode, unexisting_avcode if existing_code_url else False
 
 # 找到各种类型的文件(图片类型,视频类型,文本类型等),返回文件名称，文件路径，文件类型的字典。
