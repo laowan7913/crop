@@ -277,6 +277,7 @@ def check_javlib_url(avcode):
         # 使用 BeautifulSoup 解析网页内容
         soup = BeautifulSoup(response.text, "html.parser")
         # 找到所有的链接
+    
         videothumblist_div = soup.find("div", {"class": "videothumblist"})
         if videothumblist_div:
             first_link = videothumblist_div.find("a")  # 找到第一个链接
@@ -285,6 +286,7 @@ def check_javlib_url(avcode):
             return base_url + href
         else:
             return search_url
+        
         
 # 解析javlib 提取数据
 def get_av_class(avcode):

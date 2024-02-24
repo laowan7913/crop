@@ -93,5 +93,9 @@ if __name__ == "__main__":
     if args.info:
         avcode = list(numpy.array(args.info).flatten())
         for code in avcode:
-            print(av_class.Av(code))            
+            try:
+                print(av_class.Av(code))
+            except:
+                print(f"AvCode:{code} Info Not Found")
+                continue            
             
