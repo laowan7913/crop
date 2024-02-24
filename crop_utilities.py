@@ -196,7 +196,7 @@ async def check_av_code_img(avcode):
         url = get_img_url(code)
         try:
             async with session.head(url) as response:
-                av_code = av_class.Av(avcode).code
+                av_code = av_class.Av(code).code
                 if response.status == 200:
                     existing_avcode.append(av_code)
                     existing_code_url.append(url)
@@ -220,7 +220,7 @@ async def check_av_code_vdo(avcode):
         url = get_vdo_url(code) + suffix
         try:
             async with session.head(url) as response:
-                av_code = av_class.Av(avcode).code
+                av_code = av_class.Av(code).code
                 if response.status == 200:
                     existing_code_url.append(url)
                     existing_avcode.append(av_code)
@@ -241,7 +241,7 @@ async def check_av_code_vdo(avcode):
                     # 一旦找到存在的视频，立即跳出内部循环
                     break
             if not existing:
-                av_code = av_class.Av(avcode).code
+                av_code = av_class.Av(code).code
                 unexisting_avcode.append(av_code)            
     return existing_code_url, existing_avcode, unexisting_avcode if existing_code_url else False
 

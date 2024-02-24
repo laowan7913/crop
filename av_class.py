@@ -69,8 +69,7 @@ class Av:
         return code_num
     
     def __str__(self):
-        av = "AvCode:" + self.code + "\nAvName:" + self.name + "\nAvdate:" + self.date + "\nAvMaker:" + self.av_maker +"\nActress:" + ", ".join(self.actress)
-            
+        av = "Av-Code:" + self.code + "\nAv-Name:" + self.name + "\nAv-Date:" + self.date + "\nAv-Maker:" + self.av_maker +"\nActress:" + ", ".join(self.actress)
         return av
     
 if __name__ == "__main__":
