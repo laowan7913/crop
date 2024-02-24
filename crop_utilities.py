@@ -5,48 +5,11 @@ import requests
 import os
 import asyncio
 import aiohttp
-import ffmpeg
+import av_class
 from tqdm import tqdm
 import imageio
 from PIL import Image
-
-
-# 定义AvCode类
-class Av:
-    def __init__(self, code, name=None, actress=None, date=None, dist=None,img_pre_url=None, vdo_pre_url=None):
-        # 番号
-        self._code = code  
-        # 作品名称
-        self._name = name
-        # 主演
-        self._actress = actress
-        # 发行日期
-        self._date = date
-        # 发行商
-        self._dist = dist
-        # 封面图片
-        self._img_pre_url = img_pre_url
-        # 预览视频
-        self._vdo_pre_url = vdo_pre_url
-
-    @property
-    def code(self):
-        return self._avcode    
-
-    @classmethod    #获取番号字母
-    def get_code_pin(cls, code):
-        code_pin = "".join(re.findall("[a-z]", code.lower()))        
-        return code_pin
-    
-    @classmethod    #获取番号数字
-    def get_code_num(cls, code):
-        code_num = "".join(re.findall(r"\d", code))
-        return code_num
-    
-    def __str__(self):
-        av = Av.get_code_pin(self._avcode) + Av.get_code_num(self._code)
-        return f"{av}"
-
+from bs4 import BeautifulSoup
 
 # 设置全局变量
 # 大多数可下载
@@ -133,8 +96,8 @@ def download(url, folder="."):
 
 def get_img_url(av_code):
     # 解析AVpin 返回字母和数字
-    av_code_c = Av.get_code_pin(av_code)
-    av_code_n = Av.get_code_num(av_code)
+    av_code_c = av_class.Av.get_code_pin(av_code)
+    av_code_n = av_class.Av.get_code_num(av_code)
     # 设置AVCODE-LIST
     global img_urlbase, av_code_common, av_code_prestige, av_code_sod, av_code_3
     # 组合image 地址
@@ -154,8 +117,8 @@ def get_img_url(av_code):
 
 def get_vdo_url(av_code):
     # 解析AVpin 返回字母和数字
-    av_code_c = Av.get_code_pin(av_code)
-    av_code_n = Av.get_code_num(av_code)
+    av_code_c = av_class.Av.get_code_pin(av_code)
+    av_code_n = av_class.Av.get_code_num(av_code)
     # 设置AVCODE-LIST
     global vdo_urlbase, av_code_common, av_code_prestige, av_code_sod, av_code_3   
     # 组合pre-video 地址
@@ -202,9 +165,9 @@ def get_file_name(file_name):
 
 # 根据abc-110 -120自动生成包含所有番号的list
 def get_avcode_list(avcode_list):
-    av_pin = Av.get_code_pin(avcode_list[0])
-    av_start_num = int(Av.get_code_num(avcode_list[0]))
-    av_end_num = int(Av.get_code_num(avcode_list[1]))
+    av_pin = av_class.Av.get_code_pin(avcode_list[0])
+    av_start_num = int(av_class.Av.get_code_num(avcode_list[0]))
+    av_end_num = int(av_class.Av.get_code_num(avcode_list[1]))
     
     # 确定数字范围和步长
     start, end = min(av_start_num, av_end_num), max(av_start_num, av_end_num)
@@ -233,7 +196,7 @@ async def check_av_code_img(avcode):
         url = get_img_url(code)
         try:
             async with session.head(url) as response:
-                av_code = Av.get_code_pin(code) + "-" + Av.get_code_num(code)
+                av_code = av_class.Av(avcode).code
                 if response.status == 200:
                     existing_avcode.append(av_code)
                     existing_code_url.append(url)
@@ -257,7 +220,7 @@ async def check_av_code_vdo(avcode):
         url = get_vdo_url(code) + suffix
         try:
             async with session.head(url) as response:
-                av_code = Av.get_code_pin(code) + "-" + Av.get_code_num(code)
+                av_code = av_class.Av(avcode).code
                 if response.status == 200:
                     existing_code_url.append(url)
                     existing_avcode.append(av_code)
@@ -278,7 +241,7 @@ async def check_av_code_vdo(avcode):
                     # 一旦找到存在的视频，立即跳出内部循环
                     break
             if not existing:
-                av_code = Av.get_code_pin(code) + "-" + Av.get_code_num(code)
+                av_code = av_class.Av(avcode).code
                 unexisting_avcode.append(av_code)            
     return existing_code_url, existing_avcode, unexisting_avcode if existing_code_url else False
 
@@ -302,14 +265,80 @@ def get_file(folder_path,file_type):
                 }
     return found_files
 
-# ffmpeg 合并视屏
-def merge_videos(video_list, output_file):
-    # 创建一个ffmpeg合并器
-    ffmpeg_concat = ffmpeg.concat(*[ffmpeg.input(video) for video in video_list])
+# 获取 javlib av的具体网址
+def check_javlib_url(avcode):
+    # 发送 GET 请求获取网页内容
+    base_url = "https://www.i71t.com/cn/"
+    search_url = base_url + "vl_searchbyid.php?keyword=" + avcode
+    response = requests.get(search_url)
 
-    # 执行合并操作
-    ffmpeg_concat.output(output_file).run()
+    # 检查请求是否成功
+    if response.status_code == 200:
+        # 使用 BeautifulSoup 解析网页内容
+        soup = BeautifulSoup(response.text, "html.parser")
+        # 找到所有的链接
+        videothumblist_div = soup.find("div", {"class": "videothumblist"})
+        if videothumblist_div:
+            first_link = videothumblist_div.find("a")  # 找到第一个链接
+            if first_link:
+                href = re.sub(r"^\./", "", first_link.get("href"))  # 获取链接的 href 属性值
+            return base_url + href
+        else:
+            return search_url
+        
+# 解析javlib 提取数据
+def get_av_class(avcode):
+    actress = []
+    cover_image_url = ""
+    preview_img_src = []
+    # 发送 GET 请求获取网页内容
+    url = check_javlib_url(avcode)
+    response = requests.get(url)
 
-def add_cover_img(input_vdo, input_img, output_vdo):
-    # 使用 ffmpeg 添加封面
-    ffmpeg.input(input_img, loop=1, t=3).output(output_vdo).run(overwrite_output=True)
+    # 检查请求是否成功
+    if response.status_code == 200:
+        # 使用 BeautifulSoup 解析网页内容
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # 提取视频标题
+        video_tl = soup.find("div", {"id": "video_title"})
+        if video_tl:
+            video_title_a_tag = video_tl.find("a")
+            if video_title_a_tag:
+                video_title = video_title_a_tag.get_text().strip()
+        # 提取发行日期        
+        video_date_div = soup.find("div", {"id": "video_date"})
+        if video_date_div:
+            video_date_td = video_date_div.find("td", {"class": "text"})
+            if video_date_td:
+                video_date = video_date_td.get_text().strip()
+        # 提取制作商        
+        video_maker_div = soup.find("div", {"id": "video_maker"})
+        if video_maker_div:
+            video_maker_td = video_maker_div.find("td", {"class": "text"})
+            if video_maker_td:
+                video_maker = video_maker_td.get_text().strip()        
+        # 提取演员
+        video_cast_div = soup.find("div", {"id": "video_cast"})
+        if video_cast_div:
+            video_cast_td = video_cast_div.find("td", {"class": "text"})                        
+            if video_cast_td:
+                cast_links = video_cast_td.find_all("a")                
+                # 输出所有演员名字
+                for link in cast_links:
+                    actor_name = link.text.strip()
+                    actress.append(actor_name)
+        # 提取video_cover_image图片url
+        video_cover_img = soup.find("img", {"id": "video_jacket_img"})
+        if video_cover_img:
+            # 提取图片链接
+            cover_image_url = video_cover_img.get("src")
+        # 提取preview_image图片url                    
+        preview_img_div = soup.find("div", {"class": "previewthumbs"})
+        if preview_img_div:
+            preview_img = preview_img_div.find_all("img")
+            if preview_img:
+                preview_img_src = [img["src"] for img in preview_img if img["src"] != "../img/player.gif"]
+
+        return video_title,video_date,video_maker,actress,cover_image_url,preview_img_src        
+    else:
+        print("Failed to fetch page:", response.status_code)

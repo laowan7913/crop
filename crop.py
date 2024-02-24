@@ -1,8 +1,8 @@
-import sys
 import asyncio
 import numpy
 import crop_utilities
 import argparse
+import av_class
 
 # 根据传入的媒体类型（图片或视频），下载对应的媒体文件。
 def download_media(media_type, avcode_list, media_path="."):
@@ -42,7 +42,8 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--img_download", nargs = "+", help="download cover_image.", metavar="avcode,[path]")
     parser.add_argument("-v", "--vdo_download", nargs = "+", help="download pre-video.", metavar="avcode,[path]")
     parser.add_argument("-to", "--pre_download", nargs= 2, help="download pre-image or pre-video for last code", metavar="last_num")
-
+    parser.add_argument("-info", "--info", nargs="+", help="get av-info.", metavar="get av-info")
+    
     # 解析命令行参数
     args = parser.parse_args()
 
@@ -87,3 +88,10 @@ if __name__ == "__main__":
     if args.format_img:
         filename = list(numpy.array(args.format_img).flatten())
         crop_utilities.convert_image(filename[0],filename[1])
+
+    # -info 转换图片格式
+    if args.info:
+        avcode = list(numpy.array(args.info).flatten())
+        for code in avcode:
+            print(av_class.Av(code))            
+            
