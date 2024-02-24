@@ -53,7 +53,7 @@ class Av:
 av_code_common = {"soe", "snis", "ssni", "ssis","sone", "midv", "mide", "mifd", "mimk", "mizd",
                     "miab", "ipzz", "ipx", "ipz", "iptd", "juq", "jux", "jul", "juy", "hmn",
                     "roe", "cawd", "kawd", "same", "adn", "atid", "rbk", "meyd", "mdyd",
-                    "pgd", "pred"}
+                    "pgd", "pred", "dvdms", "dvmm"}
 # Prestige
 av_code_prestige = {"abf", "abw", "abs", "abp", "chn", "yrh", "tre", "fir", "tus", "ppt", "sga"}
 # S1 & Faleno
